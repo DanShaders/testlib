@@ -21,6 +21,10 @@
 #ifndef _TESTLIB_H_
 #define _TESTLIB_H_
 
+#define ENABLE_UNEXPECTED_EOF
+#define PCMS2
+#define FOR_LINUX
+
 /*
  * Copyright (c) 2005-2024
  */
@@ -211,6 +215,7 @@ const char *latestFeatures[] = {
 #else
 #   define WORD unsigned short
 #   include <unistd.h>
+#   include <sys/socket.h>
 #endif
 
 #if defined(FOR_WINDOWS) && defined(FOR_LINUX)
@@ -3109,7 +3114,11 @@ NORETURN void InStream::quit(TResult result, const char *msg) {
     std::string errorName;
 
     if (__testlib_shouldCheckDirt(result)) {
-        if (testlibMode != _interactor && !ouf.seekEof())
+#if defined(PCMS2) && defined(FOR_LINUX)
+        fflush(stdout);
+        shutdown(STDOUT_FILENO, SHUT_WR);
+#endif
+        if (!ouf.seekEof())
             quit(_dirt, "Extra information in the output file");
     }
 
